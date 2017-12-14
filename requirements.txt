@@ -2,3 +2,6 @@ numpy
 tensorflow
 tensorflow-gpu
 opencv
+pandas
+scikit-learn
+jupyter
