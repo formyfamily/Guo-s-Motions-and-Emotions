@@ -23,8 +23,9 @@ dataArg = {
 		"sc" : True,
 		"tamura" : True
 	},
-	'feature_dir' : "MEDIAEVAL17-DevSet-Visual_features",
-	'annotation_dir' : "MEDIAEVAL17-DevSet-Valence_Arousal-annotations",
+	'feature_dir' : "MEDIAEVAL17-Devset-Visual_features/features",
+	'valence_arousal_annotation_dir' : "MEDIAEVAL17-DevSet-Valence_Arousal-annotations/annotations",
+	'fear_annotation_dir' : "MEDIAEVAL17-DevSet-Fear-annotations/annotations",
 	'uploaded_dir' : "data/uploaded_data"
 }
 

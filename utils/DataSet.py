@@ -19,15 +19,25 @@ class DataSet(object):
         print("Loading data...")
 
         self.params = params 
-        self.featureDir = os.path.join("data", params['feature_dir'], "features") 
-        self.annotationDir = os.path.join("data", params['annotation_dir'], "annotations") 
+        self.featureDir = os.path.join("data", params['feature_dir']) 
+        self.valenceArousalAnnotationDir = os.path.join("data", params['valence_arousal_annotation_dir']) 
+        self.fearAnnotationDir = os.path.join("data", params['fear_annotation_dir']) 
+
+        if not os.path.exists(self.featureDir):
+            print("No such directory!", self.featureDir)
+        if not os.path.exists(self.valenceArousalAnnotationDir):
+            print("No such directory!", self.valenceArousalAnnotationDir)
+        if not os.path.exists(self.fearAnnotationDir):
+            print("No such directory!", self.fearAnnotationDir)
 
         featureFile = os.path.join(params['uploaded_dir'], 'features.npy')
-        annotationFile = os.path.join(params['uploaded_dir'], 'annotations.npy')
-        if os.path.exists(featureFile) and os.path.exists(annotationFile) :
+        valenceArousalAnnotationFile = os.path.join(params['uploaded_dir'], 'valenceArousalAnnotations.npy')
+        fearAnnotationFile = os.path.join(params['uploaded_dir'], 'fearAnnotations.npy')
+        if os.path.exists(featureFile) and os.path.exists(valenceArousalAnnotationFile) and os.path.exists(fearAnnotationFile) :
             print("---- npy files founded!!    (If you want to reset dataset, please delete those files first.)")
             self.featureData = np.load(featureFile)
-            self.annotationData = np.load(annotationFile)
+            self.valenceArousalAnnotationData = np.load(valenceArousalAnnotationFile)
+            self.fearAnnotationData = np.load(fearAnnotationFile)
             return 
 
         movieList = params['movies']
@@ -39,16 +49,19 @@ class DataSet(object):
                     movieList.append(movie)
 
         movieFeatures = {}
-        movieAnnotations = {}
+        valenceArousalAnnotations = {}
+        fearAnnotations = {}
         for movie in movieList:
-            movieFeatures[movie], movieAnnotations[movie] = self.__loadVideoData(movie, self.params['visual_features'])
+            movieFeatures[movie], valenceArousalAnnotations[movie], fearAnnotations[movie] = self.__loadVideoData(movie, self.params['visual_features'])
         self.featureData = np.concatenate(list(movieFeatures.values()), axis=0)
-        self.annotationData = np.concatenate(list(movieAnnotations.values()), axis=0)
+        self.valenceArousalAnnotationData = np.concatenate(list(valenceArousalAnnotations.values()), axis=0)
+        self.fearAnnotationData = np.concatenate(list(fearAnnotations.values()), axis=0)
 
         if not os.path.exists(params['uploaded_dir']):
             os.mkdir(params['uploaded_dir'])
         np.save(featureFile,self.featureData)
-        np.save(annotationFile,self.annotationData)
+        np.save(valenceArousalAnnotationFile,self.valenceArousalAnnotationData)
+        np.save(fearAnnotationFile,self.fearAnnotationData)
 
     def __loadVideoData(self, videoName, featureParams):
 
@@ -57,12 +70,13 @@ class DataSet(object):
         for featureName in featureParams:
             if(featureParams[featureName] == True):
                 features[featureName] = self.__loadFeature(videoName, featureName) 
-        annotations = self.__loadAnnotation(videoName)
-        features = np.concatenate(list(features.values()), axis=1)[0:annotations.shape[0]*5+5,:].transpose(1, 0)
+        valenceArousalAnnotations = self.__loadValenceArousalAnnotation(videoName) 
+        fearAnnotations = self.__loadFearAnnotation(videoName)
+        features = np.concatenate(list(features.values()), axis=1)[0:valenceArousalAnnotations.shape[0]*5+5,:].transpose(1, 0)
         features = features.reshape(features.shape[0], features.shape[1]//5, 5).sum(2).transpose(1, 0)
         features = features[1:features.shape[0],:]+features[0:features.shape[0]-1,:] 
 
-        return features, annotations
+        return features, valenceArousalAnnotations, fearAnnotations
 
     def __loadFeature(self, videoName, featureName):
 
@@ -82,11 +96,12 @@ class DataSet(object):
             num = num + 1
         return np.array(feature, dtype=np.float32)
 
-    def __loadAnnotation(self, videoName):
-        print("---- ---- Loading annotation")
+    def __loadValenceArousalAnnotation(self, videoName):
+        print("---- ---- Loading valence_arousal annotation")
 
-        annotationPath = os.path.join(self.annotationDir, videoName+"-MEDIAEVAL2017-valence_arousal.txt") 
+        annotationPath = os.path.join(self.valenceArousalAnnotationDir, videoName+"-MEDIAEVAL2017-valence_arousal.txt")
         if not os.path.exists(annotationPath):
+            print("No such directory!", annotationPath)
             return 
 
         annotation = []
@@ -100,7 +115,29 @@ class DataSet(object):
                     continue
                 annotation.append([float(row[2]), float(row[3])])
 
+        return np.array(annotation, dtype=np.float32)    
+
+    def __loadFearAnnotation(self, videoName):
+        print("---- ---- Loading fear annotation")
+
+        annotationPath = os.path.join(self.fearAnnotationDir, videoName+"-MEDIAEVAL2017-fear.txt") 
+        if not os.path.exists(annotationPath):
+            print("No such directory!", annotationPath)
+            return 
+
+        annotation = []
+
+        with open(annotationPath, newline='') as csvFile:
+            csvReader = csv.reader(csvFile, delimiter='\t', quotechar='|')
+            flag = 0
+            for row in csvReader:
+                if flag == 0:
+                    flag = 1
+                    continue
+                annotation.append([float(row[2])])
+
         return np.array(annotation, dtype=np.float32)
+        
 
 '''
 def load_data(dir_):
