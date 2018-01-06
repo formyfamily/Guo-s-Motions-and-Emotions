@@ -26,8 +26,10 @@ class LSTM(object):
         self.input = tf.placeholder(shape=(None,10,feature_size), dtype=tf.float32, name='features')  # shape: batch*len(10)*feature_size
         self.input =  tf.nn.dropout(self.input, keep_prob=self.keep_prob) #batch*len(10)*feature_size
         self.input_len = tf.placeholder(shape=(None), dtype=tf.float32, name='input_len') #batch
-        self.labels = tf.placeholder(shape=(None,None) , dtype=np.float32, name='labels')  # shape: batch
-
+        if(FLAGS.label_name == 'va'):
+            self.labels = tf.placeholder(shape=(None,2) , dtype=np.float32, name='labels')  # shape: batch
+        else:
+            self.labels = tf.placeholder(shape=(None) , dtype=np.int64, name='labels')  # shape: batch
         # build the vocab table (string to index)
         # initialize the training process
         self.learning_rate = tf.Variable(float(learning_rate), trainable=False, dtype=tf.float32)
@@ -43,13 +45,17 @@ class LSTM(object):
         # note that no matter the label type there're always two outputs.
         self.logits = tf.nn.dropout(tf.layers.dense(inputs=states[1], units=2, activation=None), keep_prob=self.keep_prob, name='answer')
 
-        if(label_type == 'f'):
-            self.loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.labels, logits=self.logits), name='loss')
-            predict_labels = tf.argmax(self.logits, 1, 'predict_labels')
-            self.accuracy = tf.reduce_sum(tf.cast(tf.equal(self.labels, predict_labels), tf.int32), name='accuracy')
-        else:
-            self.loss = tf.reduce_sum(tf.losses.mean_squared_error(labels=self.labels, predictions=self.logits), name='loss')
+        if(label_type == 'va'):
+            self.loss1 = tf.reduce_sum(tf.losses.mean_squared_error(labels=self.labels[:,0], predictions=self.logits[:,0]), name='loss1')
+            self.loss2 = tf.reduce_sum(tf.losses.mean_squared_error(labels=self.labels[:,1], predictions=self.logits[:,1]), name='loss2')
+            self.loss = tf.add(self.loss1, self.loss2, name='loss')
             self.accuracy = tf.Variable(0, trainable=False, name='accuracy')
+            self.correlation_coe = tf.contrib.metrics.streaming_pearson_correlation(predictions=self.logits[:,1], labels=self.labels[:,1], name='correlation') 
+        else:            
+            self.changedlogits = tf.concat([self.logits[:,0:1]*500, self.logits[:,1:2]], axis=1)
+            self.loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.labels, logits=self.changedlogits), name='loss')
+            self.predict_labels = tf.cast(((self.logits[:,1]-self.logits[:,0])>-0.4), dtype=tf.int64) #tf.argmax(self.logits, 1, 'predict_labels')
+            self.accuracy = tf.reduce_sum(tf.cast(tf.equal(self.labels, self.predict_labels), tf.int32), name='accuracy')
         mean_loss = self.loss / tf.cast(tf.shape(self.labels)[0], dtype=tf.float32)
             
         self.params = tf.trainable_variables()
@@ -67,7 +73,7 @@ class LSTM(object):
         self.merged_summary_op = tf.summary.merge_all()
         
         self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2, 
-                max_to_keep=5, pad_step_number=True, keep_checkpoint_every_n_hours=1.0)
+                max_to_keep=3, pad_step_number=True, keep_checkpoint_every_n_hours=1.0)
 
     def print_parameters(self):
         for item in self.params:
@@ -75,7 +81,7 @@ class LSTM(object):
     
     def train_step(self, session, data, summary=False, keep_prob=0.5):
         input_feed = {self.keep_prob: keep_prob, self.input: data['features'], self.input_len: data['input_len'], self.labels: data['labels']}
-        output_feed = [self.loss, self.accuracy, self.logits, self.gradient_norm, self.update]
+        output_feed = [self.loss, self.accuracy, self.gradient_norm, self.update]
         if summary:
             output_feed.append(self.merged_summary_op)
         return session.run(output_feed, input_feed)

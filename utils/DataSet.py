@@ -106,7 +106,7 @@ class DataSet(object):
 	def __loadValenceArousalAnnotation(self, videoName):
 		print("---- ---- Loading valence_arousal annotation")
 
-		annotationPath = os.path.join(self.valenceArousalAnnotationDir, videoName+"_valence-arousal.txt")
+		annotationPath = os.path.join(self.valenceArousalAnnotationDir, videoName+"-MEDIAEVAL2017-valence_arousal.txt")
 		if not os.path.exists(annotationPath):
 			print("No such directory!", annotationPath)
 			return 
@@ -127,7 +127,7 @@ class DataSet(object):
 	def __loadFearAnnotation(self, videoName):
 		print("---- ---- Loading fear annotation")
 
-		annotationPath = os.path.join(self.fearAnnotationDir, videoName+"_fear.txt") 
+		annotationPath = os.path.join(self.fearAnnotationDir, videoName+"-MEDIAEVAL2017-fear.txt") 
 		if not os.path.exists(annotationPath):
 			print("No such directory!", annotationPath)
 			return 
@@ -151,7 +151,8 @@ class DataSet(object):
 		if(labelName == 'va'):
 			labels = self.valenceArousalAnnotationData[st:ed] 
 		else:
-			labels = self.fearAnnotationData[st:ed] 
+			labels = self.fearAnnotationData[st:ed]
+			labels = np.reshape(labels, labels.shape[0])
 		return {'features': features, 'input_len':np.full(ed-st,10), 'labels':labels}
 
 	def random_shuffle(self):
