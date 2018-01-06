@@ -55,3 +55,9 @@
 2. Fear：将dataArg和tf.app.flags中的label_name均改为"f"，然后运行main.py即可。不过为了加强效果，建议修改一些参数：keep_prob改为0.2，learning_rate=0.001，视频特征数据采用fc6。和上一条类似，Fear在每个epoch后共会产生8行结果，分别表示dev和test数据集上的accuracy、precision、recall、F1score。
 
    ​
+
+### 传统方法
+
+​	传统方法的部分是利用jupyter来完成的，因此直接使用jupyter对文件夹中的ipynb文件进行读取就好了。
+
+​	不过，由于传统方法的数据在结构上和LSTM数据有所不同（前者为每个窗口抽取平均，后者为将窗口中的信息全部输入），因此需要对dataset.py进行一些修改（82至85行处），重新生成数据才可。

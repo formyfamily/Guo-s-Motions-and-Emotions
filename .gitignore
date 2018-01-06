@@ -1,3 +1,6 @@
 *.pyc
-data/
-train/
+train
+data
+.idea
+.DS_Store
+.ipynb_checkpoints

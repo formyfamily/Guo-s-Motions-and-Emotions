@@ -1,3 +1,0 @@
-input data:
-
-several movies -> several features -> persec*featuresize

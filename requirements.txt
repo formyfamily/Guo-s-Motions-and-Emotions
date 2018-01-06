@@ -3,3 +3,6 @@ tensorflow
 tensorflow-gpu
 opencv
 xlrd
+pandas
+scikit-learn
+jupyter
