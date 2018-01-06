@@ -34,7 +34,7 @@ dataArg = {
 	'valence_arousal_annotation_dir' : "MEDIAEVAL17-DevSet-Valence_Arousal-annotations/annotations",
 	'fear_annotation_dir' : "MEDIAEVAL17-DevSet-Fear-annotations/annotations",
 	'uploaded_dir' : "data/uploaded_data",
-	'label_name' : 'f',
+	'label_name' : 'va',
 	'need_upload' : True 
 }
 
@@ -48,7 +48,7 @@ tf.app.flags.DEFINE_integer("batch_size", 24, "Batch size to use during training
 tf.app.flags.DEFINE_integer("keep_prob", 0.6, "Possibility of not dropout.")
 tf.app.flags.DEFINE_boolean("log_parameters", True, "Set to True to show the parameters")
 tf.app.flags.DEFINE_string("train_dir", 'train', "Dir to save trained model")
-tf.app.flags.DEFINE_string("label_name", "f", "Determine which label to solve")
+tf.app.flags.DEFINE_string("label_name", "va", "Determine which label to solve")
 tf.app.flags.DEFINE_string("learning_rate", 0.01, "Determine which label to solve")
 FLAGS = tf.app.flags.FLAGS
 
